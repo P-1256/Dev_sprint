@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const errorHandler = require("./middlewares/errorHandler");
 const connectDb = require("./configs/db");
 const authRouter = require("./router/authRouter");
+const expenseRouter = require("./router/expenseRouter");
 const cors = require("cors");
 
 const app = express();
@@ -19,6 +20,8 @@ app.use(
 connectDb();
 
 app.use("/smarttracker/auth", authRouter);
+app.use("/smarttracker/expenses", expenseRouter);
+
 
 app.use(errorHandler);
 
