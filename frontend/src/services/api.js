@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://smart-exp-tracker.vercel.app/smarttracker';
+const BASE_URL = 'https://smart-exp-bkend.onrender.com/smarttracker';
 
 const api = axios.create({
   baseURL: BASE_URL,
