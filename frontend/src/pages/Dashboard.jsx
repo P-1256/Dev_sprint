@@ -10,6 +10,7 @@ import ErrorAlert from '../components/ErrorAlert';
 import AISuggestions from '../components/AISuggestions';
 import Alerts from '../components/Alerts';
 import ExpenseHeatmap from '../components/ExpenseHeatmap';
+import MoneyPersonalityAnalyzer from '../components/MoneyPersonalityAnalyzer';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -210,6 +211,9 @@ export default function Dashboard() {
 
       {/* ── Budget progress bar ── */}
       <BudgetProgress budget={budget} spent={totalSpent} />
+
+      {/* ── Money Personality Analyzer ── */}
+      <MoneyPersonalityAnalyzer expenses={expenses} budget={budget} />
 
       {/* ── Main content grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

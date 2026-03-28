@@ -1,6 +1,7 @@
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
+  LineChart, Line
 } from 'recharts';
 import { getCategoryColor } from './categories';
 import { useState } from 'react';
@@ -14,6 +15,32 @@ function buildChartData(expenses) {
   return Object.entries(map)
     .map(([name, value]) => ({ name, value: parseFloat(value.toFixed(2)) }))
     .sort((a, b) => b.value - a.value);
+}
+
+function buildTimeSeriesData(expenses) {
+  const dateMap = {};
+  expenses.forEach((e) => {
+    const date = new Date(e.createdAt || e.date);
+    const dateStr = date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+    dateMap[dateStr] = (dateMap[dateStr] || 0) + Number(e.amount);
+  });
+
+  // Sort by date and calculate cumulative total
+  const sortedEntries = Object.entries(dateMap).sort((a, b) => {
+    const dateA = new Date(a[0]);
+    const dateB = new Date(b[0]);
+    return dateA - dateB;
+  });
+
+  let cumulative = 0;
+  return sortedEntries.map(([date, amount]) => {
+    cumulative += amount;
+    return {
+      date,
+      daily: parseFloat(amount.toFixed(2)),
+      cumulative: parseFloat(cumulative.toFixed(2))
+    };
+  });
 }
 
 const CustomTooltip = ({ active, payload }) => {
@@ -34,6 +61,7 @@ const CustomTooltip = ({ active, payload }) => {
 export default function ExpenseChart({ expenses }) {
   const [view, setView] = useState('pie');
   const data = buildChartData(expenses);
+  const timeSeriesData = buildTimeSeriesData(expenses);
 
   if (data.length === 0) {
     return (
@@ -47,7 +75,7 @@ export default function ExpenseChart({ expenses }) {
     <div>
       {/* Toggle */}
       <div className="flex gap-1 mb-6 bg-ink-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-xl p-1 w-fit">
-        {['pie', 'bar'].map((v) => (
+        {['pie', 'bar', 'line'].map((v) => (
           <button
             key={v}
             onClick={() => setView(v)}
@@ -57,7 +85,7 @@ export default function ExpenseChart({ expenses }) {
                 : 'text-ink-400 hover:text-ink-200'
             }`}
           >
-            {v === 'pie' ? '◉ Pie' : '▬ Bar'}
+            {v === 'pie' ? '◉ Pie' : v === 'bar' ? '▬ Bar' : '⇡ Trend'}
           </button>
         ))}
       </div>
@@ -107,7 +135,7 @@ export default function ExpenseChart({ expenses }) {
             })}
           </div>
         </div>
-      ) : (
+      ) : view === 'bar' ? (
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#252b36" vertical={false} />
@@ -135,6 +163,78 @@ export default function ExpenseChart({ expenses }) {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+      ) : (
+        <div>
+          <div className="mb-4 flex gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-sage-400" />
+              <span className="text-ink-400">Daily Spend</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-blue-400" />
+              <span className="text-ink-400">Cumulative</span>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={timeSeriesData} margin={{ top: 5, right: 20, left: -10, bottom: 50 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#252b36" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fill: '#6b7280', fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                angle={-25}
+                textAnchor="end"
+                height={60}
+              />
+              <YAxis
+                tick={{ fill: '#6b7280', fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v) => `₹${v}`}
+              />
+              <Tooltip
+                content={
+                  <div className="bg-ink-50 dark:bg-ink-800 border border-ink-200 dark:border-ink-600 rounded-xl px-3 py-2 text-sm shadow-xl">
+                    {(props) => {
+                      if (props.active && props.payload && props.payload.length) {
+                        return (
+                          <>
+                            <p className="text-ink-300 mb-1 font-medium">{props.payload[0].payload.date}</p>
+                            {props.payload.map((entry, idx) => (
+                              <p key={idx} style={{ color: entry.color }} className="text-xs font-mono">
+                                {entry.name}: ₹{entry.value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </p>
+                            ))}
+                          </>
+                        );
+                      }
+                      return null;
+                    }}
+                  </div>
+                }
+              />
+              <Line
+                type="monotone"
+                dataKey="daily"
+                stroke="#7ec8a4"
+                strokeWidth={2}
+                dot={{ fill: '#7ec8a4', r: 4 }}
+                activeDot={{ r: 6 }}
+                isAnimationActive={true}
+              />
+              <Line
+                type="monotone"
+                dataKey="cumulative"
+                stroke="#38bdf8"
+                strokeWidth={2}
+                dot={{ fill: '#38bdf8', r: 4 }}
+                activeDot={{ r: 6 }}
+                isAnimationActive={true}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </div>
   );
