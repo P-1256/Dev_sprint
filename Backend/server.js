@@ -12,7 +12,7 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://smart-exp-tracker.vercel.app",
     credentials: true
   })
 );
