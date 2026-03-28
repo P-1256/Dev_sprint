@@ -4,7 +4,7 @@ const AppError = require("../utils/AppError");
 
 exports.createExpense = asyncHandler(async(req, res)=>{
 
-    const{id,amount, category, note} = req.body;
+    const{amount, category, note} = req.body;
 
     if(!amount || !category){
         throw new AppError("Fill amount and category", 400);
@@ -23,13 +23,9 @@ exports.createExpense = asyncHandler(async(req, res)=>{
 
 exports.getExpenses = asyncHandler(async (req, res) => {
 
-    const expenses = await Expense.find({ userId: req.user._id }).sort({ date: -1 });
+    const expenses = await Expense.find({ userId: req.user._id });
 
-    res.json({
-        status: "success",
-        count: expenses.length,
-        data: expenses
-    });
+    res.json(expenses);
 
 });
 
@@ -52,5 +48,4 @@ exports.deleteExpense = asyncHandler(async(req, res)=>{
         status:"Success",
         message: "expense Deleted"
     });
-
 });
